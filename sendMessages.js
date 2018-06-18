@@ -1,5 +1,5 @@
 var admin = require('firebase-admin');
-var serviceAccount = require('./helmholtzapp-firebase-adminsdk-ycdfq-4f96b7a433.json');
+var serviceAccount = require('../config/helmholtzapp-firebase-adminsdk-ycdfq-4f96b7a433.json');
 var app
 exports.initializeMessaging = async function () {
     app = admin.initializeApp({
