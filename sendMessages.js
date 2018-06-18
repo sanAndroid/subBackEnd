@@ -9,7 +9,7 @@ exports.initializeMessaging = async function () {
     return admin.messaging()
 }
 
-exports.shutdown = async function () 
+exports.shutdown = async function () {
     app.delete().then(function () {
         console.log("App deleted successfully")
     })
