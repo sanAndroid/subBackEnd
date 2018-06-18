@@ -1,16 +1,17 @@
-var mysql = require('mysql');
+var mysql = require('promise-mysql');
 var getTags = require('./getHtmlContent')
 var fcm = require('./sendMessages')
 
-var con = mysql.createConnection({
+var pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "mydb"
-
+  database: "mydb",
+  connectionLimit: 20
 });
 
 
+/*
 exports.endConnection = function (ms) {
   var start = new Date().getTime();
   var end = start;
@@ -19,36 +20,56 @@ exports.endConnection = function (ms) {
   }
   con.end()
 }
+*/
 
-exports.updateTable = function (substitutionTable) {
+updateTable = function (substitutionTable) {
   var sql = `DELETE FROM substitutions`
-  con.query(sql, function (err, result) {
-    if (err) throw err;
-    insertTable(substitutionTable)
+  var connection
+  const date = substitutionTable.shift();
+  const info = substitutionTable.shift(); // TODO: Write this into another table
+  subLen = substitutionTable.length;
+  mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "mydb",
+    connectionLimit: 20
+  }).then(function (con) {
+    connection = con
+    console.log("Deleting Database")
+    // return 
+    connection.query(sql);
+  }).then(function () {
+    for (i = 0; i < subLen; i++) {
+      sql = `INSERT INTO substitutions (date,school,htmlrow) VALUES ('${date}','HhsFra', '${substitutionTable[i]}')`
+      con.query(sql);
+    }
+    console.log("Finished writing to Database");
+
+  }).then(function () {
+    console.log("Closing Deleting Connection to Database")
+    connection.end()
+  }).catch(function (err) {
+    console.log("Error while deleting db")
   });
 };
 
-var insertTable = function (substitutionTable) {
-  const date = substitutionTable.shift();
-  const info = substitutionTable.shift();
-  subLen = substitutionTable.length;
-  var sql
-  for (i = 0; i < subLen; i++) {
-    sql = `INSERT INTO substitutions (date,school,htmlrow) VALUES ('${date}','HhsFra', '${substitutionTable[i]}')`
-    //console.log(`Line: ${i} inserted`);
-    con.query(sql, async function (err, result) {
-      if (err) throw err;
-      console.log("Insert to tabel: " + result)
-    });
-  }
-};
-
-//**This needs to be handled by an asy */
 exports.compareAndFire = async function (day, school) {
   sql = `SELECT htmlrow FROM substitutions WHERE school='${school}' AND date='${day[0]}'`
-  day.splice(0, 2)
-  con.query(sql, function (err, result) {
-    if (err) throw err
+  var substitutionTable = day
+  //day.splice(0, 2)
+  var connection
+  mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "mydb",
+    connectionLimit: 20
+  }).then(function (con) {
+    connection = con
+    console.log("Receiving Data from Database")
+    return result = con.query(sql)
+  }).then(function (result) {
     var dbEntries = []
     var newEntries = []
     var removedEntries = []
@@ -59,7 +80,7 @@ exports.compareAndFire = async function (day, school) {
     }
     // Checks if an entry in day exist already in the db
     // If not add it to new array
-    for (i = 0; i < day.length; i++) {
+    for (i = 2; i < day.length; i++) {
       var inside = true
       for (j = 0; j < dbEntries.length; j++) {
         if (dbEntries[j] == day[i])
@@ -72,7 +93,7 @@ exports.compareAndFire = async function (day, school) {
     // in the new table
     for (i = 0; i < dbEntries.length; i++) {
       var inside = true
-      for (j = 0; j < day.length; j++) {
+      for (j = 2; j < day.length; j++) {
         if (dbEntries[i] == day[j])
           inside = false
       }
@@ -87,11 +108,17 @@ exports.compareAndFire = async function (day, school) {
     for (i in removedTags) {
       fcm.pushTopic(messaging, removedTags[i], removedEntries[i])
     }
+    console.log("New Tags: " + getTags.getStudentTags(newEntries))
     for (i in newTags) {
       fcm.pushTopic(messaging, newTags[i], newEntries[i])
     }
     //console.log("Insert doNew Entries: "  newEntries)
     console.log("Insert To Database - New Tags:" + getTags.getStudentTags(newEntries))
-  }
-  );
+  }).then(function () {
+    connection.end()
+    fcm.shutdown()
+    updateTable(substitutionTable)
+  }).catch(function (err) {
+    console.log("Error while inserting substitutions to database");
+  });
 };

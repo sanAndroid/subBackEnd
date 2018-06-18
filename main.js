@@ -1,8 +1,6 @@
 
 const baseUrl = 'http://Lehrer:C1602Z@www.helmholtzschule-ffm.de/Schulleitung/StdPlan/';
 const type = 'Klassen/';
-var page = 1
-var dataArray = ["0"];
 var iDB = require('./insertToDataBase')
 
 const getData = async () => {
@@ -34,12 +32,12 @@ const getData = async () => {
         else 
             break
    } while (true)
-    await iDB.compareAndFire(today.slice(0),'HhsFra')
-    console.log("After Compare and Fire?")
-    iDB.endConnection(1000)
-    return
-    iDB.updateTable(today)
-    iDB.updateTable(tomorrow)
+
+    iDB.compareAndFire(today.slice(0),'HhsFra')
+    iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
+    ////////await iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
+    //await iDB.updateTable(today)
+    //  DB.updateTable(tomorrow)
 }
 
 async function makeRequest(i, day, dataArray) {
@@ -62,7 +60,7 @@ async function makeRequest(i, day, dataArray) {
         }
         $("tr.list").each(function (index) {
             if (index != 0) {
-                console.log("Zeile: " + index)
+                //console.log("Zeile: " + index)
                 //console.log($(this).html())
                 dataArray.push($(this).html())
             }
