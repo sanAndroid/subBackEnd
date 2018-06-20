@@ -33,11 +33,8 @@ const getData = async () => {
             break
    } while (true)
 
-    iDB.compareAndFire(today.slice(0),'HhsFra')
-    iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
-    ////////await iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
-    //await iDB.updateTable(today)
-    //  DB.updateTable(tomorrow)
+    await iDB.compareAndFire(today.slice(0),'HhsFra')
+    await iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
 }
 
 async function makeRequest(i, day, dataArray) {

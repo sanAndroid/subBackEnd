@@ -2,15 +2,6 @@ var mysql = require('promise-mysql');
 var getTags = require('./getHtmlContent')
 var fcm = require('./sendMessages')
 
-var pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "mydb",
-  connectionLimit: 20
-});
-
-
 /*
 exports.endConnection = function (ms) {
   var start = new Date().getTime();
@@ -32,17 +23,15 @@ updateTable = function (substitutionTable) {
     host: "localhost",
     user: "root",
     password: "",
-    database: "mydb",
-    connectionLimit: 20
+    database: "mydb"
   }).then(function (con) {
     connection = con
     console.log("Deleting Database")
-    // return 
-    connection.query(sql);
+   connection.query(sql);
   }).then(function () {
     for (i = 0; i < subLen; i++) {
       sql = `INSERT INTO substitutions (date,school,htmlrow) VALUES ('${date}','HhsFra', '${substitutionTable[i]}')`
-      con.query(sql);
+      connection.query(sql);
     }
     console.log("Finished writing to Database");
 
@@ -55,7 +44,7 @@ updateTable = function (substitutionTable) {
 };
 
 exports.compareAndFire = async function (day, school) {
-  sql = `SELECT htmlrow FROM substitutions WHERE school='${school}' AND date='${day[0]}'`
+  var sql = `SELECT htmlrow FROM substitutions WHERE school='${school}' AND date='${day[0]}'`
   var substitutionTable = day
   //day.splice(0, 2)
   var connection
@@ -64,7 +53,6 @@ exports.compareAndFire = async function (day, school) {
     user: "root",
     password: "",
     database: "mydb",
-    connectionLimit: 20
   }).then(function (con) {
     connection = con
     console.log("Receiving Data from Database")

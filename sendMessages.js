@@ -1,18 +1,25 @@
 var admin = require('firebase-admin');
 var serviceAccount = require('../config/helmholtzapp-firebase-adminsdk-ycdfq-4f96b7a433.json');
 var app
+var cCounter = 0
 exports.initializeMessaging = async function () {
-    app = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: 'https://HelmholtzApp.firebaseio.com'
-    });
-    return admin.messaging()
+    if (cCounter == 0) {
+        app = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: 'https://HelmholtzApp.firebaseio.com'
+        });
+    }
+        cCounter++
+        return admin.messaging()
 }
 
 exports.shutdown = async function () {
-    app.delete().then(function () {
+    cCounter--
+    if(cCounter==0){
+     app.delete().then(function () {
         console.log("App deleted successfully")
-    })
+      })
+    }
     //delete
 }
 
@@ -23,7 +30,7 @@ exports.pushTopic = async function (messaging, topic, body) {
     var message = {
         notification: {
             title: "Update im Vetretungsplan",
-            body: "Änderung bei der " + topicArray[topicArray.length -1]
+            body: "Änderung bei der " + topicArray[topicArray.length - 1]
         },
         topic: topic
     }
