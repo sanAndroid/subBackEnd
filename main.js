@@ -1,13 +1,15 @@
 
 const baseUrl = 'http://Lehrer:C1602Z@www.helmholtzschule-ffm.de/Schulleitung/StdPlan/';
 const type = 'Klassen/';
-var iDB = require('./insertToDataBase')
+const iDB = require('./insertToDataBase')
+const cheerio = require('cheerio') 
+const rp = require("request-promise");
 
 const getData = async () => {
-    var day = 'f1/';
-    var i = 1;
-    var today = await makeRequest(i, day, ["string"]);
-    var nextPage
+    let day = 'f1/'; // Url Teil, der den Tag ausgibt
+    let i = 1;
+    let today = await makeRequest(i, day, ["string"]);
+    let nextPage
     do {
         i++
         nextPage = await makeRequest(i, day, [today[0]])
@@ -20,7 +22,7 @@ const getData = async () => {
     } while (true)
     // Write to DB 
     day = 'f2/'
-    var tomorrow = await makeRequest(1, day, ["string"])
+    let tomorrow = await makeRequest(1, day, ["string"])
     i = 1
     do {
         i++
@@ -32,21 +34,19 @@ const getData = async () => {
         else 
             break
    } while (true)
-
-    await iDB.compareAndFire(today.slice(0),'HhsFra')
-    await iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
+    
+    iDB.compareAndFire(today.slice(0),'HhsFra')
+    iDB.compareAndFire(tomorrow.slice(0),'HhsFra')
 }
 
 async function makeRequest(i, day, dataArray) {
-    cheerio = require('cheerio');
-    var rp = require("request-promise");
     try {
-        var url = baseUrl + type + day + '/subst_00' + i + '.htm';
+        let url = baseUrl + type + day + '/subst_00' + i + '.htm';
         //console.log("GetDay: " + i)
         //console.log("GetDay: " + url)
         const body = await rp.get(url)
         const $ = cheerio.load(body)
-        var currentDate = $("div.mon_title").eq(0).text().split(/[ ]+/)[0]
+        let currentDate = $("div.mon_title").eq(0).text().split(/[ ]+/)[0]
         //if (i === 1) {
         dataArray.pop()
         console.log("Erstes Datum: " + currentDate);
@@ -69,4 +69,5 @@ async function makeRequest(i, day, dataArray) {
     }
 };
 
+// Entry Point
 getData()
